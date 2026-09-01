@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -39,12 +40,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         final String jwt = authHeader.substring(7);
-        final String userEmail = jwtService.extractUsername(jwt);
+        final String subject = jwtService.extractSubject(jwt);
 
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+        if (subject != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = null;
+            try {
+                UUID userId = UUID.fromString(subject);
+                userDetails = this.userDetailsService.loadUserById(userId);
+            } catch (IllegalArgumentException e) {
+                userDetails = this.userDetailsService.loadUserByUsername(subject);
+            }
 
-            if (jwtService.isTokenValid(jwt, userDetails)) {
+            if (userDetails != null && jwtService.isTokenValid(jwt, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities()
                 );

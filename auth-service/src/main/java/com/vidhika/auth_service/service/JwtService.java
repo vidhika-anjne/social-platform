@@ -1,5 +1,6 @@
 package com.vidhika.auth_service.service;
 
+import com.vidhika.auth_service.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -23,8 +24,12 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
-    public String extractUsername(String token) {
+    public String extractSubject(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    public String extractUsername(String token) {
+        return extractSubject(token);
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -32,18 +37,25 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
+    public String generateToken(User user) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("email", user.getEmail());
+        extraClaims.put("name", user.getName());
+        extraClaims.put("role", user.getRole().name());
+        return buildToken(extraClaims, user.getId().toString(), jwtExpiration);
+    }
+
     public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+        if (userDetails instanceof User user) {
+            return generateToken(user);
+        }
+        return buildToken(new HashMap<>(), userDetails.getUsername(), jwtExpiration);
     }
 
-    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
-        return buildToken(extraClaims, userDetails, jwtExpiration);
-    }
-
-    private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
+    private String buildToken(Map<String, Object> extraClaims, String subject, long expiration) {
         return Jwts.builder()
                 .claims(extraClaims)
-                .subject(userDetails.getUsername())
+                .subject(subject)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSignInKey())
@@ -51,8 +63,14 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        final String subject = extractSubject(token);
+        boolean isMatch;
+        if (userDetails instanceof User user) {
+            isMatch = subject.equals(user.getId().toString()) || subject.equals(user.getEmail());
+        } else {
+            isMatch = subject.equals(userDetails.getUsername());
+        }
+        return isMatch && !isTokenExpired(token);
     }
 
     private boolean isTokenExpired(String token) {

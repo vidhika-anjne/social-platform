@@ -35,4 +35,18 @@ public class UserProfileController {
         ProfileResponse response = userProfileService.createProfile(userId, email, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @GetMapping("/profile")
+    public ResponseEntity<ProfileResponse> getProfile(@AuthenticationPrincipal Jwt jwt) {
+        String sub = jwt.getSubject();
+        UUID userId = UUID.fromString(sub);
+
+        ProfileResponse response = userProfileService.getProfile(userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ProfileResponse> getMyProfile(@AuthenticationPrincipal Jwt jwt) {
+        return getProfile(jwt);
+    }
 }

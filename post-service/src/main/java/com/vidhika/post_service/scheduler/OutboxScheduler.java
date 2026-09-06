@@ -22,7 +22,7 @@ public class OutboxScheduler {
 
     private static final int BATCH_SIZE = 100;
     private static final int MAX_RETRIES = 5;
-    private static final String KAFKA_TOPIC = "post-events";
+    private static final String KAFKA_TOPIC = "post-liked";
 
     @Scheduled(fixedRate = 5000) // Runs every 5 seconds
     public void processOutboxEvents() {

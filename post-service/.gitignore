@@ -67,3 +67,5 @@ out/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+/test-payloads/*

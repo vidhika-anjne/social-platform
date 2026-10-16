@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -28,7 +29,7 @@ public class Post {
     private String content;
 
     @Column(length = 2000)
-    private String mediaUrl;
+    private List<String> mediaUrls;
 
     @CreationTimestamp
     @Column(updatable = false)

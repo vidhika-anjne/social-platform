@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,7 +27,7 @@ public class PostController {
     @PostMapping
     public ResponseEntity<PostResponse> createPost(
             @AuthenticationPrincipal Jwt jwt,
-            @Valid @RequestBody CreatePostRequest request) {
+            @Valid @RequestBody CreatePostRequest request) throws IOException {
 
         UUID userId = UUID.fromString(jwt.getSubject());
         PostResponse response = postService.createPost(userId, request);
@@ -53,7 +54,7 @@ public class PostController {
     public ResponseEntity<PostResponse> updatePost(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID postId,
-            @Valid @RequestBody UpdatePostRequest request) {
+            @Valid @RequestBody UpdatePostRequest request) throws IOException{
 
         UUID userId = UUID.fromString(jwt.getSubject());
         PostResponse response = postService.updatePost(postId, userId, request);

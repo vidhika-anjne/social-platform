@@ -1,5 +1,8 @@
 package com.vidhika.post_service.model;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.vidhika.post_service.dto.OutboxEventRequest;
+import com.vidhika.post_service.dto.PostMediaCleanupEvent;
 import com.vidhika.post_service.enums.OutboxStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -39,4 +42,17 @@ public class OutboxEvent {
 
     @Column(nullable = false)
     private int retryCount;
+    public static OutboxEvent outboxEventBuilder(OutboxEventRequest outboxEventRequest) throws JsonProcessingException
+    {
+        return OutboxEvent.builder()
+                .id(outboxEventRequest.getEventId())
+                .aggregateId(outboxEventRequest.getAggregateId())
+                .eventType("POST_CLEANUP")
+                .payload(outboxEventRequest.getPayload())
+                .createdAt(outboxEventRequest.getCreatedAt())
+                .processed(false)
+                .status(OutboxStatus.PENDING)
+                .retryCount(0)
+                .build();
+    }
 }

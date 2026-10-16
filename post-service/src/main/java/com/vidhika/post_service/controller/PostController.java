@@ -1,5 +1,6 @@
 package com.vidhika.post_service.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.vidhika.post_service.dto.CreatePostRequest;
 import com.vidhika.post_service.dto.PostResponse;
 import com.vidhika.post_service.dto.UpdatePostRequest;
@@ -65,7 +66,7 @@ public class PostController {
     @DeleteMapping("/{postId}")
     public ResponseEntity<Void> deletePost(
             @AuthenticationPrincipal Jwt jwt,
-            @PathVariable UUID postId) {
+            @PathVariable UUID postId) throws JsonProcessingException {
 
         UUID userId = UUID.fromString(jwt.getSubject());
         postService.deletePost(postId, userId);

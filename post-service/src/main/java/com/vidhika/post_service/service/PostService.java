@@ -1,8 +1,8 @@
 package com.vidhika.post_service.service;
 
-import com.vidhika.post_service.dto.CreatePostRequest;
-import com.vidhika.post_service.dto.PostResponse;
-import com.vidhika.post_service.dto.UpdatePostRequest;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vidhika.post_service.dto.*;
 import com.vidhika.post_service.enums.OutboxStatus;
 import com.vidhika.post_service.exception.FailedUploadException;
 import com.vidhika.post_service.exception.PostNotFoundException;
@@ -30,6 +30,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final OutboxEventRepository outboxEventRepository;
     private final FileService fileService;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public PostResponse createPost(UUID userId, CreatePostRequest request) {
@@ -123,8 +124,8 @@ public class PostService {
         log.info("POST_UPDATE_SUCCESS | userId = {} | postId = {}",userId,postId);
         return mapToResponse(updated);
     }
-
-    public void deletePost(UUID postId, UUID userId) {
+    @Transactional
+    public void deletePost(UUID postId, UUID userId) throws JsonProcessingException {
         log.info("POST_DELETE_REQUEST | userId = {} | postId = {}",userId,postId);
         Post post = postRepository.findById(postId)
                 .orElseThrow(() ->
@@ -138,10 +139,24 @@ public class PostService {
             throw new UnauthorizedActionException("You are not allowed to delete this post");
         }
         // Delete file from S3 make this process Async.
+        OutboxEvent outboxEvent = outboxEventBuilder(post);
+        outboxEventRepository.save(outboxEvent);
+        log.info("POST_DELETE_OUTBOX_SUCCESS | postId = {} | eventId = {}",postId,outboxEvent.getId());
         postRepository.delete(post);
         log.info("POST_DELETE_SUCCESS | userId = {} | postId = {}",userId,postId);
     }
-
+    private OutboxEvent outboxEventBuilder(Post post) throws JsonProcessingException {
+        UUID eventId = UUID.randomUUID();
+        LocalDateTime createdAt = LocalDateTime.now();
+        String payload = PostMediaCleanupEvent.buildPayload(post,eventId,createdAt);
+        OutboxEventRequest outboxEventRequest = OutboxEventRequest.builder()
+                .eventType("POST_CLEANUP")
+                .aggregateId(post.getId())
+                .entityId(post.getId())
+                .payload(payload)
+                .build();
+        return OutboxEvent.outboxEventBuilder(outboxEventRequest);
+    }
     private PostResponse mapToResponse(Post post) {
         return PostResponse.builder()
                 .id(post.getId())

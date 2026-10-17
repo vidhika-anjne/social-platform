@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 @Data
 @Builder
-public class PostMediaCleanupEvent
+public class PostCleanupEvent
 {
     private UUID eventId;
     private UUID aggregateId;
@@ -21,7 +21,7 @@ public class PostMediaCleanupEvent
     private LocalDateTime createdAt;
     public static String buildPayload(Post post, UUID eventId, LocalDateTime createdAt) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
-        PostMediaCleanupEvent postMediaCleanupEvent = PostMediaCleanupEvent.builder()
+        PostCleanupEvent postMediaCleanupEvent = PostCleanupEvent.builder()
                 .eventId(eventId)
                 .eventType("POST_CLEANUP")
                 .mediaKeys(post.getMediaUrls())

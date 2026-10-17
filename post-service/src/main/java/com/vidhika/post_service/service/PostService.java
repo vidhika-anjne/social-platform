@@ -1,10 +1,8 @@
 package com.vidhika.post_service.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vidhika.post_service.dto.*;
 import com.vidhika.post_service.enums.OutboxStatus;
-import com.vidhika.post_service.exception.FailedUploadException;
 import com.vidhika.post_service.exception.PostNotFoundException;
 import com.vidhika.post_service.exception.UnauthorizedActionException;
 import com.vidhika.post_service.model.OutboxEvent;
@@ -21,7 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
+// Need some changes
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -30,24 +28,14 @@ public class PostService {
     private final PostRepository postRepository;
     private final OutboxEventRepository outboxEventRepository;
     private final FileService fileService;
-    private final ObjectMapper objectMapper;
 
     @Transactional
     public PostResponse createPost(UUID userId, CreatePostRequest request) {
         // 1. Save the Post
-        List<String> mediaUrls;
-        try {
-            mediaUrls = fileService.uploadMediaFiles(request.getFiles());
-            log.info("Successfully uploaded the files to S3, with userId = {}",userId);
-        } catch (IOException e) {
-            log.error("Failed to upload the files, with userId = {}",userId);
-            throw new FailedUploadException("Failed to upload the file with userId = "+userId);
-        }
-
         Post post = Post.builder()
                 .userId(userId)
                 .content(request.getContent())
-                .mediaUrls(mediaUrls)
+                .mediaUrls(request.getMediaUrls())
                 .build();
 
         Post saved = postRepository.save(post);
@@ -115,9 +103,8 @@ public class PostService {
         if (request.getContent() != null && !request.getContent().isBlank()) {
             post.setContent(request.getContent());
         }
-        if (request.getFiles() != null) {
-
-            post.setMediaUrls(fileService.uploadMediaFiles(request.getFiles()));
+        if (request.getMediaUrls() != null) {
+            post.setMediaUrls(request.getMediaUrls());
         }
 
         Post updated = postRepository.save(post);
@@ -139,22 +126,31 @@ public class PostService {
             throw new UnauthorizedActionException("You are not allowed to delete this post");
         }
         // Delete file from S3 make this process Async.
-        OutboxEvent outboxEvent = outboxEventBuilder(post);
+        OutboxEvent outboxEvent = outboxEventBuilder(post,"POST_CLEANUP");
         outboxEventRepository.save(outboxEvent);
         log.info("POST_DELETE_OUTBOX_SUCCESS | postId = {} | eventId = {}",postId,outboxEvent.getId());
         postRepository.delete(post);
         log.info("POST_DELETE_SUCCESS | userId = {} | postId = {}",userId,postId);
     }
-    private OutboxEvent outboxEventBuilder(Post post) throws JsonProcessingException {
+    private OutboxEvent outboxEventBuilder(Post post,String eventType) throws JsonProcessingException {
         UUID eventId = UUID.randomUUID();
         LocalDateTime createdAt = LocalDateTime.now();
-        String payload = PostMediaCleanupEvent.buildPayload(post,eventId,createdAt);
-        OutboxEventRequest outboxEventRequest = OutboxEventRequest.builder()
-                .eventType("POST_CLEANUP")
-                .aggregateId(post.getId())
-                .entityId(post.getId())
-                .payload(payload)
-                .build();
+        String payload = null;
+        OutboxEventRequest outboxEventRequest = null;
+        if(eventType.equalsIgnoreCase("POST_CREATED"))
+        {
+            //
+        }
+        else
+        {
+            payload = PostCleanupEvent.buildPayload(post,eventId,createdAt);
+            outboxEventRequest = OutboxEventRequest.builder()
+                    .eventType(eventType)
+                    .aggregateId(post.getId())
+                    .entityId(post.getId())
+                    .payload(payload)
+                    .build();
+        }
         return OutboxEvent.outboxEventBuilder(outboxEventRequest);
     }
     private PostResponse mapToResponse(Post post) {

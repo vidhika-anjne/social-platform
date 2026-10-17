@@ -45,7 +45,7 @@ public class SecurityConfig {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
         SecretKey secretKey = Keys.hmacShaKeyFor(keyBytes);
         return NimbusJwtDecoder.withSecretKey(secretKey)
-                .macAlgorithm(MacAlgorithm.HS384)
+                .macAlgorithm(MacAlgorithm.HS256)
                 .build();
     }
     @Bean

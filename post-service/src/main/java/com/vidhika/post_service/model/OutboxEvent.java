@@ -2,7 +2,6 @@ package com.vidhika.post_service.model;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.vidhika.post_service.dto.OutboxEventRequest;
-import com.vidhika.post_service.dto.PostMediaCleanupEvent;
 import com.vidhika.post_service.enums.OutboxStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -22,7 +21,6 @@ import java.util.UUID;
 public class OutboxEvent {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     private UUID aggregateId;

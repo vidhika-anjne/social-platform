@@ -16,3 +16,10 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
 jwt.secret=YOUR_JWT_SECRET_KEY
 jwt.expiration=86400000
 jwt.refresh-expiration=604800000
+
+spring.kafka.bootstrap-servers=localhost:9092
+
+# GitHub OAuth Configuration
+github.client-id=YOUR_GITHUB_CLIENT_ID
+github.client-secret=YOUR_GITHUB_CLIENT_SECRET
+github.redirect-uri=http://localhost:8080/api/v1/auth/github/callback

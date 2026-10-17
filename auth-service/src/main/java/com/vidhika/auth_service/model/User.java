@@ -1,5 +1,6 @@
 package com.vidhika.auth_service.model;
 
+import com.vidhika.auth_service.enums.AuthProvider;
 import com.vidhika.auth_service.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -27,7 +28,7 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
 
     @Column(nullable = false)
@@ -36,6 +37,14 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private AuthProvider provider = AuthProvider.LOCAL;
+
+    @Column(name = "provider_id")
+    private String providerId;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

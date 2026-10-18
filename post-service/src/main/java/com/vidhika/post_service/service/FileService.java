@@ -24,10 +24,14 @@ public class FileService
 {
     private final S3Client s3Client;
     @Value("${aws.bucketName}")
+    // @Value("${aws.bucketName:dummy-bucket}")
     private String bucketName;
     private static final Set<String> FILE_TYPES = Set.of("image/","video/","audio/");
     public List<String> uploadMediaFiles(MultipartFile[] files) throws IOException
     {
+        if (files == null || files.length == 0) {
+            return new ArrayList<>();
+        }
         List<String> uploadedUrls = new ArrayList<>();
         for(MultipartFile file : files)
         {

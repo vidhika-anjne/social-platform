@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vidhika.post_service.dto.*;
 import com.vidhika.post_service.enums.OutboxStatus;
 import com.vidhika.post_service.exception.FailedUploadException;
+import com.vidhika.post_service.exception.HackathonNotFoundException;
 import com.vidhika.post_service.exception.PostNotFoundException;
 import com.vidhika.post_service.exception.UnauthorizedActionException;
 import com.vidhika.post_service.model.OutboxEvent;
 import com.vidhika.post_service.model.Post;
+import com.vidhika.post_service.repository.HackathonRepository;
 import com.vidhika.post_service.repository.OutboxEventRepository;
 import com.vidhika.post_service.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +30,20 @@ import java.util.stream.Collectors;
 public class PostService {
 
     private final PostRepository postRepository;
+    private final HackathonRepository hackathonRepository;
     private final OutboxEventRepository outboxEventRepository;
     private final FileService fileService;
     private final ObjectMapper objectMapper;
 
     @Transactional
     public PostResponse createPost(UUID userId, CreatePostRequest request) {
+        // If tagging a hackathon, ensure it exists
+        if (request.getHackathonId() != null) {
+            if (!hackathonRepository.existsById(request.getHackathonId())) {
+                throw new HackathonNotFoundException("Hackathon not found with id: " + request.getHackathonId());
+            }
+        }
+
         // 1. Save the Post
         List<String> mediaUrls;
         try {
@@ -48,6 +58,8 @@ public class PostService {
                 .userId(userId)
                 .content(request.getContent())
                 .mediaUrls(mediaUrls)
+                .hackathonId(request.getHackathonId())
+                .hackathonTagType(request.getHackathonTagType())
                 .build();
 
         Post saved = postRepository.save(post);
@@ -58,7 +70,6 @@ public class PostService {
         LocalDateTime createdAt = LocalDateTime.now();
 
         OutboxEvent outboxEvent = OutboxEvent.builder()
-                .id(eventId)
                 .aggregateId(saved.getId())
                 .eventType("POST_CREATED")
                 .payload("""
@@ -157,12 +168,25 @@ public class PostService {
                 .build();
         return OutboxEvent.outboxEventBuilder(outboxEventRequest);
     }
+    @Transactional(readOnly = true)
+    public List<PostResponse> getPostsByHackathonId(UUID hackathonId) {
+        if (!hackathonRepository.existsById(hackathonId)) {
+            throw new HackathonNotFoundException("Hackathon not found with id: " + hackathonId);
+        }
+        return postRepository.findByHackathonIdOrderByCreatedAtDesc(hackathonId)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     private PostResponse mapToResponse(Post post) {
         return PostResponse.builder()
                 .id(post.getId())
                 .userId(post.getUserId())
                 .content(post.getContent())
                 .mediaUrls(post.getMediaUrls())
+                .hackathonId(post.getHackathonId())
+                .hackathonTagType(post.getHackathonTagType())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .build();

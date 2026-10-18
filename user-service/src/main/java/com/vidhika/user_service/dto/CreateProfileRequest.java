@@ -33,4 +33,9 @@ public class CreateProfileRequest {
     private String bio;
 
     private String pic;
+
+    // Organizer fields
+    private String organizationName;
+    private String organizationType;
+    private String website;
 }

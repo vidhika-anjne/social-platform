@@ -50,6 +50,13 @@ public class PostController {
         return ResponseEntity.ok(responses);
     }
 
+    // GET /api/v1/posts/hackathon/{hackathonId}
+    @GetMapping("/hackathon/{hackathonId}")
+    public ResponseEntity<List<PostResponse>> getPostsByHackathon(@PathVariable UUID hackathonId) {
+        List<PostResponse> responses = postService.getPostsByHackathonId(hackathonId);
+        return ResponseEntity.ok(responses);
+    }
+
     // PUT /api/v1/posts/{postId}
     @PutMapping("/{postId}")
     public ResponseEntity<PostResponse> updatePost(

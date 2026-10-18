@@ -57,6 +57,9 @@ public class UserProfileService {
         if (request.getCity() != null) profile.setCity(request.getCity());
         if (request.getBio() != null) profile.setBio(request.getBio());
         if (request.getPic() != null) profile.setPic(request.getPic());
+        if (request.getOrganizationName() != null) profile.setOrganizationName(request.getOrganizationName());
+        if (request.getOrganizationType() != null) profile.setOrganizationType(request.getOrganizationType());
+        if (request.getWebsite() != null) profile.setWebsite(request.getWebsite());
 
         UserProfile saved = userProfileRepository.save(profile);
         return mapToResponse(saved);
@@ -83,6 +86,9 @@ public class UserProfileService {
                 .city(profile.getCity())
                 .bio(profile.getBio())
                 .pic(profile.getPic())
+                .organizationName(profile.getOrganizationName())
+                .organizationType(profile.getOrganizationType())
+                .website(profile.getWebsite())
                 .build();
     }
 }

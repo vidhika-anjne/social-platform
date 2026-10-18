@@ -26,4 +26,7 @@ public class ProfileResponse {
     private String city;
     private String bio;
     private String pic;
+    private String organizationName;
+    private String organizationType;
+    private String website;
 }

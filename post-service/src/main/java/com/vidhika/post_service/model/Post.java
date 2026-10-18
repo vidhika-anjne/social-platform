@@ -1,4 +1,5 @@
 package com.vidhika.post_service.model;
+import com.vidhika.post_service.enums.HackathonTagType;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,6 +31,13 @@ public class Post {
 
     @Column(length = 2000)
     private List<String> mediaUrls;
+
+    @Column(name = "hackathon_id")
+    private UUID hackathonId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "hackathon_tag_type")
+    private HackathonTagType hackathonTagType;
 
     @CreationTimestamp
     @Column(updatable = false)

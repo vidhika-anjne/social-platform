@@ -39,11 +39,13 @@ public class AuthService {
             throw new RuntimeException("Email already registered");
         }
 
+        Role role = (request.getRole() != null) ? request.getRole() : Role.USER;
+
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
+                .role(role)
                 .provider(AuthProvider.LOCAL)
                 .build();
 
@@ -222,5 +224,27 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         refreshTokenService.deleteByUser(user);
         userRepository.delete(user);
+    }
+
+    @Transactional
+    public AuthResponse upgradeToOrganizer(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setRole(Role.ORGANIZER);
+        User savedUser = userRepository.save(user);
+
+        String accessToken = jwtService.generateToken(savedUser);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(savedUser);
+
+        log.info("User {} upgraded to ORGANIZER role", savedUser.getEmail());
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken.getToken())
+                .email(savedUser.getEmail())
+                .name(savedUser.getName())
+                .role(savedUser.getRole().name())
+                .build();
     }
 }

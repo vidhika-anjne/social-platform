@@ -79,4 +79,10 @@ public class AuthController {
         authService.deleteAccount(userDetails.getUsername());
         return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
     }
+
+    @PostMapping("/upgrade-to-organizer")
+    public ResponseEntity<AuthResponse> upgradeToOrganizer(@AuthenticationPrincipal UserDetails userDetails) {
+        AuthResponse response = authService.upgradeToOrganizer(userDetails.getUsername());
+        return ResponseEntity.ok(response);
+    }
 }

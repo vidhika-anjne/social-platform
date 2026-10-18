@@ -49,4 +49,9 @@ public class UserProfile {
 
     @Column(length = 1000)
     private String pic;
+
+    // Organizer-specific profile fields
+    private String organizationName;
+    private String organizationType;
+    private String website;
 }

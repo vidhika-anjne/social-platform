@@ -14,3 +14,14 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
 
 # JWT Configuration (Must match auth-service secret)
 jwt.secret=YOUR_JWT_SECRET_KEY
+
+# Kafka Consumer Configuration
+spring.kafka.bootstrap-servers=localhost:9092
+spring.kafka.consumer.group-id=user-service-group
+spring.kafka.consumer.auto-offset-reset=earliest
+spring.kafka.consumer.key-deserializer=org.apache.kafka.common.serialization.StringDeserializer
+spring.kafka.consumer.value-deserializer=org.apache.kafka.common.serialization.StringDeserializer
+
+# GitHub API Configuration
+github.api.url=https://api.github.com
+github.token=YOUR_GITHUB_PERSONAL_ACCESS_TOKEN_OR_APP_TOKEN

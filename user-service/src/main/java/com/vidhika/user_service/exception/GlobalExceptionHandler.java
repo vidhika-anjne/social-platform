@@ -20,6 +20,31 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", ex.getMessage()));
     }
 
+    @ExceptionHandler({RepositoryNotFoundException.class, GitHubResourceNotFoundException.class})
+    public ResponseEntity<Map<String, String>> handleNotFoundExceptions(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(GitHubAuthenticationException.class)
+    public ResponseEntity<Map<String, String>> handleGitHubAuthException(GitHubAuthenticationException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(GitHubRateLimitException.class)
+    public ResponseEntity<Map<String, String>> handleGitHubRateLimitException(GitHubRateLimitException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(GitHubNotConnectedException.class)
+    public ResponseEntity<Map<String, String>> handleGitHubNotConnectedException(GitHubNotConnectedException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(GitHubApiException.class)
+    public ResponseEntity<Map<String, String>> handleGitHubApiException(GitHubApiException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of("error", ex.getMessage()));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));

@@ -60,6 +60,9 @@ public class UserProfileService {
         if (request.getOrganizationName() != null) profile.setOrganizationName(request.getOrganizationName());
         if (request.getOrganizationType() != null) profile.setOrganizationType(request.getOrganizationType());
         if (request.getWebsite() != null) profile.setWebsite(request.getWebsite());
+        if (request.getGithubUsername() != null && !request.getGithubUsername().isBlank()) {
+            profile.setGithubUsername(request.getGithubUsername().trim());
+        }
 
         UserProfile saved = userProfileRepository.save(profile);
         return mapToResponse(saved);
@@ -89,6 +92,7 @@ public class UserProfileService {
                 .organizationName(profile.getOrganizationName())
                 .organizationType(profile.getOrganizationType())
                 .website(profile.getWebsite())
+                .githubUsername(profile.getGithubUsername())
                 .build();
     }
 }

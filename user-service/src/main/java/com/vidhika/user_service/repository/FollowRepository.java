@@ -2,10 +2,13 @@ package com.vidhika.user_service.repository;
 
 import com.vidhika.user_service.model.Follow;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -28,4 +31,18 @@ public interface FollowRepository extends JpaRepository<Follow, UUID> {
 
     // Count how many users a user is following
     long countByFollowerId(UUID followerId);
+
+    // Get all users a user is following and Sorting is done in ascending order on the basis of ID.
+    @Query(nativeQuery = true,value = """
+        SELECT * 
+        FROM follows 
+        WHERE follower_id = :followerId
+        ORDER BY id ASC
+    """)
+    List<Follow> findByFollowerIdOrderByIdAsc(@Param("followerId") UUID followerId);
+
+    // Get all the followers of list of users
+    List<Follow> findByFollowerIdIn(List<UUID> followerIds);
+    List<Follow> findByFollowerIdInOrderByIdAsc(List<UUID> followerId);
+    List<Follow> findByFollowerIdInOrderByFollowingIdAsc(List<UUID> followerId);
 }

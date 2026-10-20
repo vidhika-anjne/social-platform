@@ -19,31 +19,43 @@ public class SuggestionServiceImpl implements SuggestionService
     public List<UserProfile> getSuggestions(UUID userId)
     {
         // fetch all the users which this user follows;
-        List<Follow> followList = followRepository.findByFollowerId(userId);
-        Set<UUID> FOLLOW_LIST = new HashSet<>(followList.stream()
-                .map(Follow::getFollowingId)
-                .toList());
+        List<UUID> followList = followRepository.findByFollowerId(userId).stream()
+                .map((Follow::getFollowingId))
+                .toList();
+        if(followList.isEmpty()) return List.of();
         /*
             Now this Set contains all the unique users which
             are followed by our current user.
             A->B
             (FOLLOW_LIST contains all B)
          */
-        FOLLOW_LIST.remove(userId);
-        /*
+        List<UUID> suggestionList = followRepository.findByFollowerIdInOrderByFollowingIdAsc(followList).stream()
+                .map(Follow::getFollowingId)
+                .toList();
+        List<UUID> uniqueSuggestionList = removeDuplicateSuggestions(suggestionList);
+         /*
             A->B->C
             (SUGGESTION_LIST contains all C)
          */
-        Set<UUID> SUGGESTION_LIST = new HashSet<>();
-        for(UUID followerId : FOLLOW_LIST)
+        uniqueSuggestionList.remove(userId);
+        uniqueSuggestionList.removeAll(followList);
+        return userProfileRepository.findAllById(uniqueSuggestionList);
+    }
+    private List<UUID> removeDuplicateSuggestions(List<UUID> suggestionList)
+    {
+        if(suggestionList.isEmpty()) return new ArrayList<>();
+        int i = 0;
+        int n = suggestionList.size();
+        for(int j=0;j<n;j++)
         {
-            List<Follow> suggestionList = followRepository.findByFollowerId(followerId);
-            SUGGESTION_LIST.addAll(suggestionList.stream()
-                    .map(Follow::getFollowingId)
-                    .toList()
-            );
+            if(!suggestionList.get(i).equals(suggestionList.get(j)))
+            {
+                suggestionList.set(i+1,suggestionList.get(j));
+                i++;
+            }
         }
-        SUGGESTION_LIST.removeAll(FOLLOW_LIST);
-        return userProfileRepository.findAllById(SUGGESTION_LIST);
+        return suggestionList.stream()
+                .limit(i+1)
+                .toList();
     }
 }

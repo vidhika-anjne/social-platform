@@ -3,7 +3,6 @@ package com.vidhika.user_service.service;
 import com.vidhika.user_service.model.Follow;
 import com.vidhika.user_service.model.UserProfile;
 import com.vidhika.user_service.repository.FollowRepository;
-import com.vidhika.user_service.repository.SuggestionService;
 import com.vidhika.user_service.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

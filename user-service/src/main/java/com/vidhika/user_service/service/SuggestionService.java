@@ -1,4 +1,4 @@
-package com.vidhika.user_service.repository;
+package com.vidhika.user_service.service;
 
 import com.vidhika.user_service.model.UserProfile;
 import org.springframework.stereotype.Service;

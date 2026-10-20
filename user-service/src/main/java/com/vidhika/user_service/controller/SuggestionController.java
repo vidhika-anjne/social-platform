@@ -1,7 +1,7 @@
 package com.vidhika.user_service.controller;
 
 import com.vidhika.user_service.model.UserProfile;
-import com.vidhika.user_service.repository.SuggestionService;
+import com.vidhika.user_service.service.SuggestionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

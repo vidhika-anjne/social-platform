@@ -54,4 +54,11 @@ public class UserProfile {
     private String organizationName;
     private String organizationType;
     private String website;
+
+    // GitHub integration fields
+    @Column(name = "github_username")
+    private String githubUsername;
+
+    @Column(name = "github_access_token")
+    private String githubAccessToken;
 }

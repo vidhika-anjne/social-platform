@@ -29,4 +29,5 @@ public class ProfileResponse {
     private String organizationName;
     private String organizationType;
     private String website;
+    private String githubUsername;
 }

@@ -38,4 +38,7 @@ public class CreateProfileRequest {
     private String organizationName;
     private String organizationType;
     private String website;
+
+    // GitHub fields
+    private String githubUsername;
 }

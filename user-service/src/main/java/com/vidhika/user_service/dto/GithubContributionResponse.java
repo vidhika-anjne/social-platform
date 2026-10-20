@@ -24,6 +24,10 @@ public class GithubContributionResponse {
     private int pullRequestsMerged;
     private boolean selected;
     private LocalDateTime lastSyncedAt;
+    private LocalDateTime nextSyncAt;
+    private int syncAttempts;
+    private String lastSyncStatus;
+    private String lastSyncError;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

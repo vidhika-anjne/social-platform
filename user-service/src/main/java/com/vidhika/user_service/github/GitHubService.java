@@ -123,7 +123,12 @@ public class GitHubService {
         contribution.setPullRequestsCreated(stats.getPullRequestsCreated());
         contribution.setPullRequestsMerged(stats.getPullRequestsMerged());
         contribution.setSelected(true);
-        contribution.setLastSyncedAt(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        contribution.setLastSyncedAt(now);
+        contribution.setNextSyncAt(now.plusHours(24));
+        contribution.setSyncAttempts(0);
+        contribution.setLastSyncStatus("SUCCESS");
+        contribution.setLastSyncError(null);
 
         GithubContribution saved = githubContributionRepository.save(contribution);
         log.info("Saved GitHub contribution for user {} on repo {}", userId, stats.getNameWithOwner());
@@ -198,6 +203,10 @@ public class GitHubService {
                 .pullRequestsMerged(entity.getPullRequestsMerged())
                 .selected(entity.isSelected())
                 .lastSyncedAt(entity.getLastSyncedAt())
+                .nextSyncAt(entity.getNextSyncAt())
+                .syncAttempts(entity.getSyncAttempts())
+                .lastSyncStatus(entity.getLastSyncStatus())
+                .lastSyncError(entity.getLastSyncError())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();

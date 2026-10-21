@@ -54,6 +54,19 @@ public class GithubContribution {
     @Column(name = "last_synced_at")
     private LocalDateTime lastSyncedAt;
 
+    @Column(name = "next_sync_at")
+    private LocalDateTime nextSyncAt;
+
+    @Column(name = "sync_attempts", nullable = false)
+    @Builder.Default
+    private int syncAttempts = 0;
+
+    @Column(name = "last_sync_status")
+    private String lastSyncStatus;
+
+    @Column(name = "last_sync_error", length = 1000)
+    private String lastSyncError;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

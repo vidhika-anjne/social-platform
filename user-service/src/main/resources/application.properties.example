@@ -25,3 +25,11 @@ spring.kafka.consumer.value-deserializer=org.apache.kafka.common.serialization.S
 # GitHub API Configuration
 github.api.url=https://api.github.com
 github.token=YOUR_GITHUB_PERSONAL_ACCESS_TOKEN_OR_APP_TOKEN
+
+# GitHub Sync Scheduler Configuration
+github.sync.fixed-delay-ms=300000
+github.sync.initial-delay-ms=10000
+github.sync.batch-size=100
+github.sync.base-backoff-minutes=5
+github.sync.max-backoff-minutes=360
+github.sync.success-interval-hours=24

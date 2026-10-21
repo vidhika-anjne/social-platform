@@ -296,6 +296,14 @@ class GitHubServiceTest {
         }
 
         @Override
+        public List<GithubContribution> findDueContributions(LocalDateTime now, org.springframework.data.domain.Pageable pageable) {
+            return storage.values().stream()
+                    .filter(c -> c.isSelected() && (c.getNextSyncAt() == null || !c.getNextSyncAt().isAfter(now)))
+                    .limit(pageable.getPageSize())
+                    .toList();
+        }
+
+        @Override
         public <S extends GithubContribution> S save(S entity) {
             if (entity.getId() == null) {
                 entity.setId(UUID.randomUUID());

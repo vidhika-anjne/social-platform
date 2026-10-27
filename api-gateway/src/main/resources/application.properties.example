@@ -8,3 +8,38 @@ jwt.secret=YOUR_JWT_SECRET_KEY
 spring.cloud.gateway.routes[0].id=auth-service
 spring.cloud.gateway.routes[0].uri=http://localhost:8081
 spring.cloud.gateway.routes[0].predicates[0]=Path=/api/v1/auth/**
+
+# User Service Routes
+spring.cloud.gateway.routes[1].id=user-service
+spring.cloud.gateway.routes[1].uri=http://localhost:8083
+spring.cloud.gateway.routes[1].predicates[0]=Path=/api/v1/users/**
+
+#Post Service Routes
+spring.cloud.gateway.routes[2].id=post-service
+spring.cloud.gateway.routes[2].uri=http://localhost:8084
+spring.cloud.gateway.routes[2].predicates[0]=Path=/api/v1/posts/**
+
+# Feed Service Routes
+spring.cloud.gateway.routes[3].id=feed-service
+spring.cloud.gateway.routes[3].uri=http://localhost:8085
+spring.cloud.gateway.routes[3].predicates[0]=Path=/api/v1/feed/**
+
+# Notification Service Routes
+spring.cloud.gateway.routes[4].id=feed-service
+spring.cloud.gateway.routes[4].uri=http://localhost:8086
+spring.cloud.gateway.routes[4].predicates[0]=Path=/api/v1/notifications/**
+
+# Hackathon Routes (Post Service)
+spring.cloud.gateway.routes[5].id=hackathon-routes
+spring.cloud.gateway.routes[5].uri=http://localhost:8084
+spring.cloud.gateway.routes[5].predicates[0]=Path=/api/v1/hackathons/**
+
+# Chat Service Routes
+spring.cloud.gateway.routes[6].id=chat-service
+spring.cloud.gateway.routes[6].uri=http://localhost:8087
+spring.cloud.gateway.routes[6].predicates[0]=Path=/api/v1/chats/**
+
+# Chat Service WebSocket Route
+spring.cloud.gateway.routes[7].id=chat-service-ws
+spring.cloud.gateway.routes[7].uri=ws://localhost:8087
+spring.cloud.gateway.routes[7].predicates[0]=Path=/ws/**

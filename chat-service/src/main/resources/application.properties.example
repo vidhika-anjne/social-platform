@@ -1,0 +1,17 @@
+spring.application.name=chat-service
+server.port=8087
+
+# MongoDB Configuration
+spring.data.mongodb.uri=mongodb://localhost:27017/pulse_chat_db
+spring.data.mongodb.auto-index-creation=true
+
+# JWT Configuration (Must match auth-service & api-gateway secret)
+jwt.secret=YOUR_JWT_SECRET_KEY
+
+# Kafka Consumer Configuration
+spring.kafka.bootstrap-servers=localhost:9092
+spring.kafka.consumer.group-id=chat-service-group
+spring.kafka.consumer.auto-offset-reset=earliest
+spring.kafka.consumer.key-deserializer=org.apache.kafka.common.serialization.StringDeserializer
+spring.kafka.consumer.value-deserializer=org.apache.kafka.common.serialization.StringDeserializer
+kafka.topic.team-events=team-events

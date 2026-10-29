@@ -1,24 +1,31 @@
 package com.vidhika.post_service.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vidhika.post_service.dto.HackathonRegistrationResponse;
 import com.vidhika.post_service.dto.RegisterHackathonRequest;
 import com.vidhika.post_service.dto.UpdateRegistrationStatusRequest;
 import com.vidhika.post_service.enums.HackathonStatus;
+import com.vidhika.post_service.enums.OutboxStatus;
 import com.vidhika.post_service.enums.RegistrationStatus;
 import com.vidhika.post_service.exception.HackathonNotFoundException;
 import com.vidhika.post_service.exception.RegistrationNotFoundException;
 import com.vidhika.post_service.exception.UnauthorizedActionException;
 import com.vidhika.post_service.model.Hackathon;
 import com.vidhika.post_service.model.HackathonRegistration;
+import com.vidhika.post_service.model.OutboxEvent;
 import com.vidhika.post_service.repository.HackathonRegistrationRepository;
 import com.vidhika.post_service.repository.HackathonRepository;
+import com.vidhika.post_service.repository.OutboxEventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -29,6 +36,8 @@ public class HackathonRegistrationService {
 
     private final HackathonRepository hackathonRepository;
     private final HackathonRegistrationRepository registrationRepository;
+    private final OutboxEventRepository outboxEventRepository;
+    private final ObjectMapper objectMapper;
     
     @Transactional
     public HackathonRegistrationResponse registerForHackathon(UUID hackathonId, UUID userId, RegisterHackathonRequest request) {
@@ -76,6 +85,11 @@ public class HackathonRegistrationService {
         HackathonRegistration saved = registrationRepository.save(registration);
         log.info("User {} registered for hackathon {} (team: {}) with registrationId {}",
                 userId, hackathonId, teamName, saved.getId());
+
+        if (teamName != null) {
+            checkAndPublishTeamFormedEvent(hackathon, teamName);
+        }
+
         return toResponse(saved);
     }
 
@@ -150,5 +164,51 @@ public class HackathonRegistrationService {
                 .status(r.getStatus())
                 .registeredAt(r.getRegisteredAt())
                 .build();
+    }
+
+    private void checkAndPublishTeamFormedEvent(Hackathon hackathon, String teamName) {
+        List<HackathonRegistration> teamMembers =
+                registrationRepository.findByHackathonIdAndTeamNameIgnoreCase(hackathon.getId(), teamName.trim());
+
+        int minRequired = (hackathon.getMinTeamSize() != null && hackathon.getMinTeamSize() > 1)
+                ? hackathon.getMinTeamSize()
+                : 2;
+
+        if (teamMembers.size() >= minRequired) {
+            UUID teamId = UUID.nameUUIDFromBytes(
+                    (hackathon.getId().toString() + ":" + teamName.trim().toLowerCase()).getBytes(StandardCharsets.UTF_8)
+            );
+
+            List<String> memberIds = teamMembers.stream()
+                    .map(m -> m.getUserId().toString())
+                    .collect(Collectors.toList());
+
+            try {
+                Map<String, Object> eventPayload = new HashMap<>();
+                eventPayload.put("eventType", "TEAM_FORMED");
+                eventPayload.put("teamId", teamId.toString());
+                eventPayload.put("hackathonId", hackathon.getId().toString());
+                eventPayload.put("teamName", teamName.trim());
+                eventPayload.put("memberIds", memberIds);
+
+                String payloadJson = objectMapper.writeValueAsString(eventPayload);
+
+                OutboxEvent outboxEvent = OutboxEvent.builder()
+                        .aggregateId(teamId)
+                        .eventType("TEAM_FORMED")
+                        .payload(payloadJson)
+                        .createdAt(LocalDateTime.now())
+                        .processed(false)
+                        .status(OutboxStatus.PENDING)
+                        .retryCount(0)
+                        .build();
+
+                outboxEventRepository.save(outboxEvent);
+                log.info("Queued TEAM_FORMED outbox event for team '{}' (teamId: {}, members: {}) in hackathon {}",
+                        teamName, teamId, memberIds.size(), hackathon.getId());
+            } catch (Exception e) {
+                log.error("Failed to serialize TEAM_FORMED event for team '{}': {}", teamName, e.getMessage(), e);
+            }
+        }
     }
 }

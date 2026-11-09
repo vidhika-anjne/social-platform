@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -90,6 +91,41 @@ public class NovuNotificationService {
         } catch (Exception e) {
             log.error("Failed to identify subscriber [{}] in Novu: {}", subscriberId, e.getMessage());
         }
+    }
+
+    /**
+     * Register a mobile / browser push device token for the subscriber.
+     *
+     * @param subscriberId User UUID string
+     * @param providerId   "fcm" or "apns"
+     * @param deviceToken  The raw push token from Firebase or APNs
+     */
+    public void setSubscriberCredentials(String subscriberId, String providerId, String deviceToken) {
+        if (!properties.isEnabled()) {
+            log.debug("Novu is disabled. Skipping credential registration for subscriber [{}]", subscriberId);
+            return;
+        }
+
+        try {
+            Map<String, Object> body = Map.of(
+                    "providerId", providerId != null ? providerId : "fcm",
+                    "deviceTokens", List.of(deviceToken)
+            );
+
+            novuRestClient.put()
+                    .uri("/subscribers/{subscriberId}/credentials", subscriberId)
+                    .body(body)
+                    .retrieve()
+                    .toBodilessEntity();
+
+            log.info("Registered [{}] device token for subscriber [{}] in Novu", providerId, subscriberId);
+        } catch (Exception e) {
+            log.error("Failed to register device token in Novu for subscriber [{}]: {}", subscriberId, e.getMessage());
+        }
+    }
+
+    public void setSubscriberCredentials(UUID subscriberId, String providerId, String deviceToken) {
+        setSubscriberCredentials(subscriberId.toString(), providerId, deviceToken);
     }
 }
 

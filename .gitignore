@@ -16,6 +16,7 @@ bin/
 
 # Help & documentation files
 HELP.md
+notification-service/docs/
 
 # Log files
 *.log

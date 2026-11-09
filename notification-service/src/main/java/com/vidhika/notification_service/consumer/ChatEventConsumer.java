@@ -78,13 +78,18 @@ public class ChatEventConsumer {
 
                 notificationRepository.save(notification);
 
-                // 2. Trigger Novu workflow for real-time in-app & push notification
+                // 2. Route to appropriate Novu workflow based on conversation type
+                String convType = event.getConversationType() != null ? event.getConversationType() : "DIRECT";
+                String workflowId = ("ONE_TO_ONE".equalsIgnoreCase(convType) || "DIRECT".equalsIgnoreCase(convType))
+                        ? "chat-direct-message"
+                        : "chat-group-message";
+
                 novuNotificationService.trigger(
-                        "chat-message-received",
+                        workflowId,
                         recipientId,
                         Map.of(
                                 "conversationId", event.getConversationId(),
-                                "conversationType", event.getConversationType() != null ? event.getConversationType() : "DIRECT",
+                                "conversationType", convType,
                                 "messageId", event.getMessageId(),
                                 "senderId", event.getSenderId(),
                                 "messagePreview", event.getContent() != null ? event.getContent() : ""

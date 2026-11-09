@@ -1,5 +1,6 @@
 package com.vidhika.chat_service.service;
 
+import com.vidhika.chat_service.client.UserServiceClient;
 import com.vidhika.chat_service.dto.request.AddMemberRequest;
 import com.vidhika.chat_service.dto.request.CreateConversationRequest;
 import com.vidhika.chat_service.dto.response.ConversationMemberResponse;
@@ -32,6 +33,7 @@ public class ConversationServiceImpl implements ConversationService {
     private final ConversationRepository conversationRepository;
     private final ConversationMemberRepository conversationMemberRepository;
     private final MessageRepository messageRepository;
+    private final UserServiceClient userServiceClient;
 
     @Override
     @Transactional
@@ -52,6 +54,11 @@ public class ConversationServiceImpl implements ConversationService {
             }
             if (recipientId.equals(currentUserId)) {
                 throw new BadRequestException("Cannot create a 1-to-1 conversation with yourself");
+            }
+
+            // Verify neither user has blocked the other
+            if (userServiceClient.isBlocked(currentUserId, recipientId)) {
+                throw new BadRequestException("Cannot create conversation: User is blocked");
             }
 
             // Check if 1-to-1 conversation already exists
@@ -229,6 +236,9 @@ public class ConversationServiceImpl implements ConversationService {
 
         List<ConversationMember> added = new ArrayList<>();
         for (String uid : targetUserIds) {
+            if (userServiceClient.isBlocked(currentUserId, uid)) {
+                throw new BadRequestException("Cannot add member: User " + uid + " is blocked");
+            }
             if (!conversationMemberRepository.existsByConversationIdAndUserId(conversationId, uid)) {
                 ConversationMember newMember = ConversationMember.builder()
                         .conversationId(conversationId)

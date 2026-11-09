@@ -3,14 +3,19 @@ package com.vidhika.notification_service.consumer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vidhika.notification_service.dto.kafka.ChatMessageEvent;
 import com.vidhika.notification_service.model.Notification;
+import com.vidhika.notification_service.model.NotificationPreference;
+import com.vidhika.notification_service.repository.NotificationPreferenceRepository;
 import com.vidhika.notification_service.repository.NotificationRepository;
+import com.vidhika.notification_service.service.NotificationThrottlingService;
 import com.vidhika.notification_service.service.NovuNotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -23,6 +28,8 @@ import java.util.UUID;
 public class ChatEventConsumer {
 
     private final NotificationRepository notificationRepository;
+    private final NotificationPreferenceRepository preferenceRepository;
+    private final NotificationThrottlingService throttlingService;
     private final NovuNotificationService novuNotificationService;
     private final ObjectMapper objectMapper;
 
@@ -65,7 +72,7 @@ public class ChatEventConsumer {
                     continue;
                 }
 
-                // 1. Persist notification in database
+                // 1. Persist notification in database (ensures in-app history/badge is preserved)
                 Notification notification = Notification.builder()
                         .recipientId(recipientId)
                         .actorId(senderId)
@@ -78,7 +85,29 @@ public class ChatEventConsumer {
 
                 notificationRepository.save(notification);
 
-                // 2. Route to appropriate Novu workflow based on conversation type
+                // 2. Evaluate User Preferences & DND filter
+                Optional<NotificationPreference> optPref = preferenceRepository.findByUserId(recipientId);
+                boolean pushEnabled = optPref.map(NotificationPreference::isPushEnabled).orElse(true);
+                boolean isDndActive = optPref.map(p -> p.isDndActiveNow(LocalTime.now())).orElse(false);
+
+                if (!pushEnabled) {
+                    log.info("Push notifications disabled by preference for recipient {}. Skipping Novu buzz.", recipientId);
+                    continue;
+                }
+
+                if (isDndActive) {
+                    log.info("DND is active for recipient {}. Skipping Novu buzz.", recipientId);
+                    continue;
+                }
+
+                // 3. Anti-spam / flood throttling filter (skip rapid bursts within 5s)
+                if (throttlingService.shouldThrottle(recipientId.toString(), event.getConversationId())) {
+                    log.info("Chat notification throttled (5s burst) for recipient {} in conversation {}",
+                            recipientId, event.getConversationId());
+                    continue;
+                }
+
+                // 4. Route to appropriate Novu workflow based on conversation type
                 String convType = event.getConversationType() != null ? event.getConversationType() : "DIRECT";
                 String workflowId = ("ONE_TO_ONE".equalsIgnoreCase(convType) || "DIRECT".equalsIgnoreCase(convType))
                         ? "chat-direct-message"

@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -64,5 +65,14 @@ public class FollowController {
     @GetMapping("/{userId}/following/count")
     public ResponseEntity<CountResponse> getFollowingCount(@PathVariable UUID userId) {
         return ResponseEntity.ok(followService.getFollowingCount(userId));
+    }
+
+    // GET /api/v1/users/{userId}/is-following/{targetUserId}
+    @GetMapping("/{userId}/is-following/{targetUserId}")
+    public ResponseEntity<Map<String, Boolean>> isFollowing(
+            @PathVariable UUID userId,
+            @PathVariable UUID targetUserId) {
+        boolean following = followService.isFollowing(userId, targetUserId);
+        return ResponseEntity.ok(Map.of("following", following));
     }
 }

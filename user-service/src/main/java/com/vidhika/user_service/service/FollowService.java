@@ -81,6 +81,10 @@ public class FollowService {
                 .build();
     }
 
+    public boolean isFollowing(UUID followerId, UUID targetUserId) {
+        return followRepository.existsByFollowerIdAndFollowingId(followerId, targetUserId);
+    }
+
     private FollowResponse mapToResponse(Follow follow) {
         return FollowResponse.builder()
                 .followerId(follow.getFollowerId())

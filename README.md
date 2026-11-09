@@ -47,7 +47,7 @@ flowchart TD
 | **`user-service`** | `8083` | `user_db` | Developer/student profiles (degree, year, college, bio, avatar) and organizer profiles (organization name, type, website). |
 | **`post-service`** | `8084` | `post_db` | Social posts, comments, likes, AWS S3 media uploads, Hackathon hosting & lifecycle, team/solo registrations with capacity capping, and Transactional Outbox publishing. |
 | **`feed-service`** | `8085` | `feed_db` | Fan-out on write architecture. Consumes Kafka post events to construct and serve personalized feeds. |
-| **`notificaiton-service`** | `8086` | `notification_db` | Event-driven notifications and batching scheduler for likes, comments, and event alerts. |
+| **`notification-service`** | `8086` | `notification_db` | Event-driven notifications and batching scheduler for likes, comments, and event alerts. |
 
 ---
 
@@ -185,7 +185,7 @@ cd post-service && mvn spring-boot:run
 cd feed-service && mvn spring-boot:run
 
 # 6. Notification Service (Port 8086)
-cd notificaiton-service && mvn spring-boot:run
+cd notification-service && mvn spring-boot:run
 ```
 
 ---

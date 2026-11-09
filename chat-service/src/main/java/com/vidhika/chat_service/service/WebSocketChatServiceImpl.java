@@ -1,5 +1,6 @@
 package com.vidhika.chat_service.service;
 
+import com.vidhika.chat_service.dto.kafka.ChatMessageEvent;
 import com.vidhika.chat_service.dto.request.MessageStatusUpdateRequest;
 import com.vidhika.chat_service.dto.request.SendMessageRequest;
 import com.vidhika.chat_service.dto.request.TypingRequest;
@@ -7,6 +8,10 @@ import com.vidhika.chat_service.dto.response.MessageResponse;
 import com.vidhika.chat_service.dto.response.WebSocketEventResponse;
 import com.vidhika.chat_service.enums.MessageStatus;
 import com.vidhika.chat_service.enums.WebSocketAction;
+import com.vidhika.chat_service.model.ConversationMember;
+import com.vidhika.chat_service.producer.ChatEventProducer;
+import com.vidhika.chat_service.repository.ConversationMemberRepository;
+import com.vidhika.chat_service.repository.ConversationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -14,7 +19,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -23,6 +31,9 @@ public class WebSocketChatServiceImpl implements WebSocketChatService {
 
     private final MessageService messageService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ChatEventProducer chatEventProducer;
+    private final ConversationRepository conversationRepository;
+    private final ConversationMemberRepository conversationMemberRepository;
 
     @Override
     public MessageResponse processAndBroadcastMessage(String senderId, String conversationId, SendMessageRequest request) {
@@ -35,6 +46,34 @@ public class WebSocketChatServiceImpl implements WebSocketChatService {
         String destination = "/topic/chat/" + conversationId;
         messagingTemplate.convertAndSend(destination, persistedMessage);
         log.info("Broadcasted message {} to destination {}", persistedMessage.getId(), destination);
+
+        // 3. Emit CHAT_MESSAGE_SENT event to Kafka for notifications
+        try {
+            List<String> recipientIds = conversationMemberRepository.findByConversationId(conversationId).stream()
+                    .map(ConversationMember::getUserId)
+                    .filter(userId -> !userId.equals(senderId))
+                    .collect(Collectors.toList());
+
+            String conversationType = conversationRepository.findById(conversationId)
+                    .map(c -> c.getType() != null ? c.getType().name() : "DIRECT")
+                    .orElse("DIRECT");
+
+            ChatMessageEvent event = ChatMessageEvent.builder()
+                    .eventId(UUID.randomUUID().toString())
+                    .eventType("CHAT_MESSAGE_SENT")
+                    .conversationId(conversationId)
+                    .conversationType(conversationType)
+                    .senderId(senderId)
+                    .recipientIds(recipientIds)
+                    .messageId(persistedMessage.getId())
+                    .content(persistedMessage.getContent())
+                    .createdAt(persistedMessage.getCreatedAt())
+                    .build();
+
+            chatEventProducer.publishMessageSentEvent(event);
+        } catch (Exception e) {
+            log.error("Failed to prepare/dispatch chat event for message {}: {}", persistedMessage.getId(), e.getMessage(), e);
+        }
 
         return persistedMessage;
     }

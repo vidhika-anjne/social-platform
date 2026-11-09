@@ -9,3 +9,4 @@ public enum MessagePrivacy {
     EVERYONE,
     FOLLOWERS_ONLY
 }
+

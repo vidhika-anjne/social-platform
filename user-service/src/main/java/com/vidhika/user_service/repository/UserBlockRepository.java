@@ -21,3 +21,4 @@ public interface UserBlockRepository extends JpaRepository<UserBlock, UUID> {
 
     List<UserBlock> findByBlockedId(UUID blockedId);
 }
+

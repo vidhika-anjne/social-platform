@@ -16,3 +16,4 @@ public interface NotificationPreferenceRepository extends JpaRepository<Notifica
 
     void deleteByUserId(UUID userId);
 }
+

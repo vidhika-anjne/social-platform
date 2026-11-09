@@ -24,3 +24,4 @@ public class ChatMessageEvent {
     private String content;
     private LocalDateTime createdAt;
 }
+

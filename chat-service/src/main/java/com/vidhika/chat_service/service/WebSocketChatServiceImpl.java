@@ -34,6 +34,7 @@ public class WebSocketChatServiceImpl implements WebSocketChatService {
     private final ChatEventProducer chatEventProducer;
     private final ConversationRepository conversationRepository;
     private final ConversationMemberRepository conversationMemberRepository;
+    private final PresenceService presenceService;
 
     @Override
     public MessageResponse processAndBroadcastMessage(String senderId, String conversationId, SendMessageRequest request) {
@@ -50,27 +51,35 @@ public class WebSocketChatServiceImpl implements WebSocketChatService {
         // 3. Emit CHAT_MESSAGE_SENT event to Kafka for notifications
         try {
             List<String> recipientIds = conversationMemberRepository.findByConversationId(conversationId).stream()
+                    .filter(member -> !member.getUserId().equals(senderId))
+                    // 1. Suppress if member has muted this conversation
+                    .filter(member -> !member.isMuted())
+                    // 2. Suppress if member is actively viewing this exact chat room right now
+                    .filter(member -> !presenceService.isUserInRoom(member.getUserId(), conversationId))
                     .map(ConversationMember::getUserId)
-                    .filter(userId -> !userId.equals(senderId))
                     .collect(Collectors.toList());
 
-            String conversationType = conversationRepository.findById(conversationId)
-                    .map(c -> c.getType() != null ? c.getType().name() : "DIRECT")
-                    .orElse("DIRECT");
+            if (!recipientIds.isEmpty()) {
+                String conversationType = conversationRepository.findById(conversationId)
+                        .map(c -> c.getType() != null ? c.getType().name() : "DIRECT")
+                        .orElse("DIRECT");
 
-            ChatMessageEvent event = ChatMessageEvent.builder()
-                    .eventId(UUID.randomUUID().toString())
-                    .eventType("CHAT_MESSAGE_SENT")
-                    .conversationId(conversationId)
-                    .conversationType(conversationType)
-                    .senderId(senderId)
-                    .recipientIds(recipientIds)
-                    .messageId(persistedMessage.getId())
-                    .content(persistedMessage.getContent())
-                    .createdAt(persistedMessage.getCreatedAt())
-                    .build();
+                ChatMessageEvent event = ChatMessageEvent.builder()
+                        .eventId(UUID.randomUUID().toString())
+                        .eventType("CHAT_MESSAGE_SENT")
+                        .conversationId(conversationId)
+                        .conversationType(conversationType)
+                        .senderId(senderId)
+                        .recipientIds(recipientIds)
+                        .messageId(persistedMessage.getId())
+                        .content(persistedMessage.getContent())
+                        .createdAt(persistedMessage.getCreatedAt())
+                        .build();
 
-            chatEventProducer.publishMessageSentEvent(event);
+                chatEventProducer.publishMessageSentEvent(event);
+            } else {
+                log.debug("All recipients for conversation {} are currently active in the room or muted. Notification event skipped.", conversationId);
+            }
         } catch (Exception e) {
             log.error("Failed to prepare/dispatch chat event for message {}: {}", persistedMessage.getId(), e.getMessage(), e);
         }

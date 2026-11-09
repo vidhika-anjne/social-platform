@@ -326,6 +326,34 @@ public class ConversationServiceImpl implements ConversationService {
         return mapToResponse(conversation);
     }
 
+    @Override
+    @Transactional
+    public ConversationMemberResponse muteConversation(String currentUserId, String conversationId, int durationMinutes) {
+        ConversationMember member = conversationMemberRepository.findByConversationIdAndUserId(conversationId, currentUserId)
+                .orElseThrow(() -> new ChatAccessDeniedException("Access denied: You are not a member of conversation " + conversationId));
+
+        LocalDateTime mutedUntil = durationMinutes <= 0
+                ? LocalDateTime.now().plusYears(100)
+                : LocalDateTime.now().plusMinutes(durationMinutes);
+
+        member.setMutedUntil(mutedUntil);
+        ConversationMember saved = conversationMemberRepository.save(member);
+        log.info("User {} muted conversation {} until {}", currentUserId, conversationId, mutedUntil);
+        return mapMemberToResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public ConversationMemberResponse unmuteConversation(String currentUserId, String conversationId) {
+        ConversationMember member = conversationMemberRepository.findByConversationIdAndUserId(conversationId, currentUserId)
+                .orElseThrow(() -> new ChatAccessDeniedException("Access denied: You are not a member of conversation " + conversationId));
+
+        member.setMutedUntil(null);
+        ConversationMember saved = conversationMemberRepository.save(member);
+        log.info("User {} unmuted conversation {}", currentUserId, conversationId);
+        return mapMemberToResponse(saved);
+    }
+
     private Optional<Conversation> findExistingOneToOne(String user1, String user2) {
         List<ConversationMember> user1Memberships = conversationMemberRepository.findByUserId(user1);
         if (user1Memberships.isEmpty()) return Optional.empty();

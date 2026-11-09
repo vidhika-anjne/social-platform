@@ -23,5 +23,9 @@ public interface ConversationService {
 
     void removeMember(String currentUserId, String conversationId, String targetUserId);
 
+    ConversationMemberResponse muteConversation(String currentUserId, String conversationId, int durationMinutes);
+
+    ConversationMemberResponse unmuteConversation(String currentUserId, String conversationId);
+
     ConversationResponse createHackathonTeamChat(String teamId, String hackathonId, List<String> memberIds, String teamName);
 }

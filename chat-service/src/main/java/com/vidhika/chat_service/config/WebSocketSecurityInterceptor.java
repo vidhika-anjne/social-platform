@@ -3,6 +3,7 @@ package com.vidhika.chat_service.config;
 import com.vidhika.chat_service.repository.ConversationMemberRepository;
 import com.vidhika.chat_service.security.JwtTokenProvider;
 import com.vidhika.chat_service.security.UserPrincipal;
+import com.vidhika.chat_service.service.PresenceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
@@ -23,6 +24,7 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final ConversationMemberRepository conversationMemberRepository;
+    private final PresenceService presenceService;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -37,6 +39,10 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
                 handleSubscribe(accessor);
             } else if (StompCommand.SEND.equals(command)) {
                 handleSend(accessor);
+            } else if (StompCommand.DISCONNECT.equals(command)) {
+                handleDisconnect(accessor);
+            } else if (StompCommand.UNSUBSCRIBE.equals(command)) {
+                handleUnsubscribe(accessor);
             }
         }
 
@@ -67,6 +73,7 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
 
         UserPrincipal principal = new UserPrincipal(userId, email, role);
         accessor.setUser(principal);
+        presenceService.setUserOnline(userId);
         log.info("WebSocket connected successfully for user: {}", userId);
     }
 
@@ -87,7 +94,25 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
                     throw new AccessDeniedException("User is not a member of conversation " + conversationId);
                 }
                 log.debug("User {} authorized to subscribe to {}", user.getName(), destination);
+                presenceService.setActiveChatRoom(user.getName(), conversationId);
+                presenceService.setUserOnline(user.getName());
             }
+        }
+    }
+
+    private void handleDisconnect(StompHeaderAccessor accessor) {
+        Principal user = accessor.getUser();
+        if (user != null && user.getName() != null) {
+            presenceService.setUserOffline(user.getName());
+            log.info("User {} disconnected from WebSocket, presence cleared", user.getName());
+        }
+    }
+
+    private void handleUnsubscribe(StompHeaderAccessor accessor) {
+        Principal user = accessor.getUser();
+        if (user != null && user.getName() != null) {
+            presenceService.clearActiveChatRoom(user.getName());
+            log.debug("User {} unsubscribed, cleared active room", user.getName());
         }
     }
 

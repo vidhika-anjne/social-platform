@@ -102,4 +102,27 @@ public class ConversationController {
         conversationService.removeMember(currentUserId, conversationId, userId);
         return ResponseEntity.noContent().build();
     }
+
+    // POST /api/v1/chats/{conversationId}/mute (Mute notifications for conversation)
+    @PostMapping("/{conversationId}/mute")
+    public ResponseEntity<ConversationMemberResponse> muteConversation(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String conversationId,
+            @RequestParam(defaultValue = "480") int durationMinutes) {
+
+        String currentUserId = jwt.getSubject();
+        ConversationMemberResponse response = conversationService.muteConversation(currentUserId, conversationId, durationMinutes);
+        return ResponseEntity.ok(response);
+    }
+
+    // POST /api/v1/chats/{conversationId}/unmute (Unmute notifications for conversation)
+    @PostMapping("/{conversationId}/unmute")
+    public ResponseEntity<ConversationMemberResponse> unmuteConversation(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String conversationId) {
+
+        String currentUserId = jwt.getSubject();
+        ConversationMemberResponse response = conversationService.unmuteConversation(currentUserId, conversationId);
+        return ResponseEntity.ok(response);
+    }
 }

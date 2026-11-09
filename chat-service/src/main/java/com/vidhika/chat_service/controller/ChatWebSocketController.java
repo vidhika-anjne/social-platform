@@ -3,6 +3,7 @@ package com.vidhika.chat_service.controller;
 import com.vidhika.chat_service.dto.request.MessageStatusUpdateRequest;
 import com.vidhika.chat_service.dto.request.SendMessageRequest;
 import com.vidhika.chat_service.dto.request.TypingRequest;
+import com.vidhika.chat_service.service.PresenceService;
 import com.vidhika.chat_service.service.WebSocketChatService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import java.security.Principal;
 public class ChatWebSocketController {
 
     private final WebSocketChatService webSocketChatService;
+    private final PresenceService presenceService;
 
     /**
      * Handles sending chat messages.
@@ -100,5 +102,34 @@ public class ChatWebSocketController {
 
         String userId = principal.getName();
         webSocketChatService.broadcastRead(userId, conversationId, request);
+    }
+
+    /**
+     * Client informs the server they entered a chat room screen.
+     * Destination: /app/chat/{conversationId}/enter
+     */
+    @MessageMapping("/chat/{conversationId}/enter")
+    public void enterRoom(
+            @DestinationVariable String conversationId,
+            Principal principal) {
+        if (principal != null && principal.getName() != null) {
+            presenceService.setActiveChatRoom(principal.getName(), conversationId);
+            presenceService.setUserOnline(principal.getName());
+            log.debug("User {} entered chat room {}", principal.getName(), conversationId);
+        }
+    }
+
+    /**
+     * Client informs the server they left a chat room screen.
+     * Destination: /app/chat/{conversationId}/leave
+     */
+    @MessageMapping("/chat/{conversationId}/leave")
+    public void leaveRoom(
+            @DestinationVariable String conversationId,
+            Principal principal) {
+        if (principal != null && principal.getName() != null) {
+            presenceService.clearActiveChatRoom(principal.getName());
+            log.debug("User {} left chat room {}", principal.getName(), conversationId);
+        }
     }
 }

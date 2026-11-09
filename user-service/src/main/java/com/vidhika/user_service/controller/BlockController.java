@@ -59,3 +59,4 @@ public class BlockController {
         return ResponseEntity.ok(Map.of("blocked", blocked));
     }
 }
+

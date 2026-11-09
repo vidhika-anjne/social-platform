@@ -19,3 +19,4 @@ public class BlockResponse {
     private UUID blockedId;
     private LocalDateTime createdAt;
 }
+

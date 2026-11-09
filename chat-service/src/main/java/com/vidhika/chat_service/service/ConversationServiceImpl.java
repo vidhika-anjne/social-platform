@@ -375,6 +375,8 @@ public class ConversationServiceImpl implements ConversationService {
                 .conversationId(member.getConversationId())
                 .userId(member.getUserId())
                 .joinedAt(member.getJoinedAt())
+                .mutedUntil(member.getMutedUntil())
+                .muted(member.isMuted())
                 .build();
     }
 

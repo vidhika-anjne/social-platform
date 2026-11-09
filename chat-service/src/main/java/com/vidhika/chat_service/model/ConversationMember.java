@@ -30,4 +30,14 @@ public class ConversationMember {
     @CreatedDate
     @Builder.Default
     private LocalDateTime joinedAt = LocalDateTime.now();
+
+    /**
+     * Timestamp until which notifications for this conversation are muted for this user.
+     * Null means unmuted.
+     */
+    private LocalDateTime mutedUntil;
+
+    public boolean isMuted() {
+        return mutedUntil != null && mutedUntil.isAfter(LocalDateTime.now());
+    }
 }

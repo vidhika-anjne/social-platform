@@ -65,6 +65,8 @@ public class NotificationService {
                 .type(notification.getType())
                 .message(notification.getMessage())
                 .postId(notification.getPostId())
+                .conversationId(notification.getConversationId())
+                .messageId(notification.getMessageId())
                 .actorId(notification.getActorId())
                 .read(notification.isRead())
                 .createdAt(notification.getCreatedAt())

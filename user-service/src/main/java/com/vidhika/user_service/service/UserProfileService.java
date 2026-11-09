@@ -63,6 +63,9 @@ public class UserProfileService {
         if (request.getGithubUsername() != null && !request.getGithubUsername().isBlank()) {
             profile.setGithubUsername(request.getGithubUsername().trim());
         }
+        if (request.getMessagePrivacy() != null) {
+            profile.setMessagePrivacy(request.getMessagePrivacy());
+        }
 
         UserProfile saved = userProfileRepository.save(profile);
         return mapToResponse(saved);
@@ -93,6 +96,7 @@ public class UserProfileService {
                 .organizationType(profile.getOrganizationType())
                 .website(profile.getWebsite())
                 .githubUsername(profile.getGithubUsername())
+                .messagePrivacy(profile.getMessagePrivacy())
                 .build();
     }
 }

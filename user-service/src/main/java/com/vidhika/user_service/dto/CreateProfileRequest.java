@@ -1,6 +1,7 @@
 package com.vidhika.user_service.dto;
 
 import com.vidhika.user_service.enums.Gender;
+import com.vidhika.user_service.enums.MessagePrivacy;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
@@ -41,4 +42,6 @@ public class CreateProfileRequest {
 
     // GitHub fields
     private String githubUsername;
+
+    private MessagePrivacy messagePrivacy;
 }

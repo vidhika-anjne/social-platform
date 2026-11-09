@@ -1,6 +1,7 @@
 package com.vidhika.user_service.dto;
 
 import com.vidhika.user_service.enums.Gender;
+import com.vidhika.user_service.enums.MessagePrivacy;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -30,4 +31,5 @@ public class ProfileResponse {
     private String organizationType;
     private String website;
     private String githubUsername;
+    private MessagePrivacy messagePrivacy;
 }

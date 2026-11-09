@@ -18,6 +18,8 @@ public class NotificationResponse {
     private String type;
     private String message;
     private UUID postId;
+    private String conversationId;
+    private String messageId;
     private UUID actorId;
     private boolean read;
     private LocalDateTime createdAt;

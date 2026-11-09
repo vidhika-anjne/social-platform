@@ -1,6 +1,7 @@
 package com.vidhika.user_service.model;
 
 import com.vidhika.user_service.enums.Gender;
+import com.vidhika.user_service.enums.MessagePrivacy;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -61,4 +62,9 @@ public class UserProfile {
 
     @Column(name = "github_access_token")
     private String githubAccessToken;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "message_privacy", nullable = false)
+    @Builder.Default
+    private MessagePrivacy messagePrivacy = MessagePrivacy.EVERYONE;
 }

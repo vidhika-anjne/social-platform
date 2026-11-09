@@ -15,4 +15,6 @@ public class ConversationMemberResponse {
     private String conversationId;
     private String userId;
     private LocalDateTime joinedAt;
+    private LocalDateTime mutedUntil;
+    private boolean muted;
 }

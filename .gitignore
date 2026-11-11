@@ -25,8 +25,12 @@ hs_err_pid*.log
 
 # Sensitive environment & configuration files
 .env
+.env.*
 *.env
 .env.local
+!.env.example
+!**/.env.example
+docker-compose.override.yml
 **/application.properties
 **/application-*.properties
 **/application.yml
@@ -34,6 +38,7 @@ hs_err_pid*.log
 **/application.yaml
 **/application-*.yaml
 !**/application.properties.example
+!**/application.example.properties
 !**/application.yml.example
 !**/application.yaml.example
 

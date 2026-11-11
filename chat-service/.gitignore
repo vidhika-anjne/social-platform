@@ -1,0 +1,74 @@
+# Compiled class files & build directories
+target/
+build/
+bin/
+*.class
+*.jar
+*.war
+*.ear
+!**/src/main/**/target/
+!**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Maven wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# Help & documentation files
+HELP.md
+
+# Log files
+*.log
+logs/
+hs_err_pid*.log
+
+# Sensitive environment & configuration files
+.env
+.env.*
+*.env
+.env.local
+!.env.example
+!**/.env.example
+**/application.properties
+**/application-*.properties
+**/application.yml
+**/application-*.yml
+**/application.yaml
+**/application-*.yaml
+!**/application.properties.example
+!**/application.example.properties
+!**/application.yml.example
+!**/application.yaml.example
+
+# IDE & Editor files
+# Eclipse / STS
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
+.vscode/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+Desktop.ini
+

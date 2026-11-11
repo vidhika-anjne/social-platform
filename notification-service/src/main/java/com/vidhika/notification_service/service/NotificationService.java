@@ -65,6 +65,7 @@ public class NotificationService {
                 .type(notification.getType())
                 .message(notification.getMessage())
                 .postId(notification.getPostId())
+                .hackathonId(notification.getHackathonId())
                 .conversationId(notification.getConversationId())
                 .messageId(notification.getMessageId())
                 .actorId(notification.getActorId())

@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -152,7 +153,58 @@ public class HackathonRegistrationService {
         registration.setStatus(request.getStatus());
         HackathonRegistration updated = registrationRepository.save(registration);
         log.info("Registration {} status updated to {} by organizer {}", registrationId, request.getStatus(), organizerId);
+
+        publishRegistrationStatusUpdatedEvent(hackathon, updated);
+
         return toResponse(updated);
+    }
+
+    private void publishRegistrationStatusUpdatedEvent(Hackathon hackathon, HackathonRegistration registration) {
+        try {
+            List<String> recipientIds = new ArrayList<>();
+            String teamName = registration.getTeamName();
+
+            if (teamName != null && !teamName.isBlank()) {
+                List<HackathonRegistration> teamMembers =
+                        registrationRepository.findByHackathonIdAndTeamNameIgnoreCase(hackathon.getId(), teamName.trim());
+                for (HackathonRegistration member : teamMembers) {
+                    if (!member.getId().equals(registration.getId())) {
+                        member.setStatus(registration.getStatus());
+                        registrationRepository.save(member);
+                    }
+                    recipientIds.add(member.getUserId().toString());
+                }
+            } else {
+                recipientIds.add(registration.getUserId().toString());
+            }
+
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("eventType", "HACKATHON_REGISTRATION_STATUS_UPDATED");
+            payload.put("registrationId", registration.getId().toString());
+            payload.put("hackathonId", hackathon.getId().toString());
+            payload.put("hackathonTitle", hackathon.getTitle());
+            payload.put("status", registration.getStatus().name());
+            payload.put("teamName", teamName);
+            payload.put("recipientIds", recipientIds);
+
+            String payloadJson = objectMapper.writeValueAsString(payload);
+
+            OutboxEvent outboxEvent = OutboxEvent.builder()
+                    .aggregateId(registration.getId())
+                    .eventType("HACKATHON_REGISTRATION_STATUS_UPDATED")
+                    .payload(payloadJson)
+                    .createdAt(LocalDateTime.now())
+                    .processed(false)
+                    .status(OutboxStatus.PENDING)
+                    .retryCount(0)
+                    .build();
+
+            outboxEventRepository.save(outboxEvent);
+            log.info("Queued HACKATHON_REGISTRATION_STATUS_UPDATED outbox event for registration {} (status: {}, recipients: {})",
+                    registration.getId(), registration.getStatus(), recipientIds.size());
+        } catch (Exception e) {
+            log.error("Failed to serialize HACKATHON_REGISTRATION_STATUS_UPDATED event: {}", e.getMessage(), e);
+        }
     }
 
     private HackathonRegistrationResponse toResponse(HackathonRegistration r) {
@@ -188,6 +240,7 @@ public class HackathonRegistrationService {
                 eventPayload.put("eventType", "TEAM_FORMED");
                 eventPayload.put("teamId", teamId.toString());
                 eventPayload.put("hackathonId", hackathon.getId().toString());
+                eventPayload.put("hackathonTitle", hackathon.getTitle());
                 eventPayload.put("teamName", teamName.trim());
                 eventPayload.put("memberIds", memberIds);
 

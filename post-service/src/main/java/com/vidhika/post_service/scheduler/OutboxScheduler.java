@@ -26,7 +26,9 @@ public class OutboxScheduler {
     private static final String TEAM_EVENTS_TOPIC = "team-events";
 
     private String resolveTopic(OutboxEvent event) {
-        if ("TEAM_FORMED".equalsIgnoreCase(event.getEventType())) {
+        String eventType = event.getEventType();
+        if ("TEAM_FORMED".equalsIgnoreCase(eventType)
+                || "HACKATHON_REGISTRATION_STATUS_UPDATED".equalsIgnoreCase(eventType)) {
             return TEAM_EVENTS_TOPIC;
         }
         return DEFAULT_POST_TOPIC;

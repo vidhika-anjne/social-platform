@@ -24,3 +24,4 @@ public class UserFollowedEvent {
     private UUID targetUserId;
     private LocalDateTime createdAt;
 }
+

@@ -186,4 +186,49 @@ class HackathonRegistrationServiceTest {
         assertThat(members.get(0).asText()).isEqualTo(user1Id.toString());
         assertThat(members.get(1).asText()).isEqualTo(user2Id.toString());
     }
+
+    @Test
+    void updateRegistrationStatus_PublishesStatusUpdatedOutboxEvent() throws Exception {
+        UUID registrationId = UUID.randomUUID();
+        UUID organizerId = hackathon.getOrganizerId();
+
+        HackathonRegistration registration = HackathonRegistration.builder()
+                .id(registrationId)
+                .hackathonId(hackathonId)
+                .userId(user1Id)
+                .teamName("AlphaCoders")
+                .status(RegistrationStatus.REGISTERED)
+                .registeredAt(LocalDateTime.now())
+                .build();
+
+        when(hackathonRepository.findById(hackathonId)).thenReturn(Optional.of(hackathon));
+        when(registrationRepository.findById(registrationId)).thenReturn(Optional.of(registration));
+        when(registrationRepository.save(any(HackathonRegistration.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(registrationRepository.findByHackathonIdAndTeamNameIgnoreCase(hackathonId, "AlphaCoders"))
+                .thenReturn(List.of(registration));
+
+        com.vidhika.post_service.dto.UpdateRegistrationStatusRequest request = new com.vidhika.post_service.dto.UpdateRegistrationStatusRequest();
+        request.setStatus(RegistrationStatus.WINNER);
+
+        registrationService.updateRegistrationStatus(hackathonId, registrationId, organizerId, "ORGANIZER", request);
+
+        ArgumentCaptor<OutboxEvent> captor = ArgumentCaptor.forClass(OutboxEvent.class);
+        verify(outboxEventRepository, times(1)).save(captor.capture());
+
+        OutboxEvent event = captor.getValue();
+        assertThat(event.getEventType()).isEqualTo("HACKATHON_REGISTRATION_STATUS_UPDATED");
+        assertThat(event.getStatus()).isEqualTo(OutboxStatus.PENDING);
+
+        JsonNode payload = objectMapper.readTree(event.getPayload());
+        assertThat(payload.get("eventType").asText()).isEqualTo("HACKATHON_REGISTRATION_STATUS_UPDATED");
+        assertThat(payload.get("hackathonId").asText()).isEqualTo(hackathonId.toString());
+        assertThat(payload.get("hackathonTitle").asText()).isEqualTo("Pulse Hackathon 2026");
+        assertThat(payload.get("status").asText()).isEqualTo("WINNER");
+        assertThat(payload.get("teamName").asText()).isEqualTo("AlphaCoders");
+
+        JsonNode recipients = payload.get("recipientIds");
+        assertThat(recipients.isArray()).isTrue();
+        assertThat(recipients.size()).isEqualTo(1);
+        assertThat(recipients.get(0).asText()).isEqualTo(user1Id.toString());
+    }
 }

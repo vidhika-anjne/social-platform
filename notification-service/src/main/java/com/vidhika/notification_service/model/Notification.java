@@ -31,6 +31,9 @@ public class Notification {
     @Column(name = "post_id")
     private UUID postId;
 
+    @Column(name = "hackathon_id")
+    private UUID hackathonId;
+
     @Column(name = "conversation_id")
     private String conversationId;
 

@@ -18,6 +18,7 @@ public class NotificationResponse {
     private String type;
     private String message;
     private UUID postId;
+    private UUID hackathonId;
     private String conversationId;
     private String messageId;
     private UUID actorId;
